@@ -374,14 +374,24 @@ public class TileTank extends TileBase implements FluidUtils.IFluidHandlerAutoma
         return getVariant() == 17;
     }
 
+    private int getGranularity() {
+        int v = getVariant();
+        if(v == 0) return 1;
+        else if(v <= 8) return 13;
+        else if(v <= 16) return 17;
+        else return 1;
+    }
+
     @Override
     public int fill(FluidStack resource, boolean doFill) {
         if (canFillFluidType(resource)) {
             int toFill = isCreative() ? getCapacity() : resource.amount;
             Iterator<TileTank> i = getAllTanks();
+            int granularity = getGranularity();
             while (i.hasNext() && toFill > 0) {
                 TileTank tank = i.next();
                 int canFill = Math.min(toFill, CAPACITY - (tank.fluidStack == null ? 0 : tank.fluidStack.amount));
+                canFill -= canFill % granularity;
                 if (doFill) {
                     if (tank.fluidStack == null) {
                         tank.fluidStack = new FluidStack(resource, canFill);
@@ -440,9 +450,11 @@ public class TileTank extends TileBase implements FluidUtils.IFluidHandlerAutoma
         }
 
         TileTank tank;
+        int granularity = getGranularity();
         while (!drainTanks.empty() && toDrain > 0) {
             tank = drainTanks.pop();
             int canDrain = Math.min(toDrain, tank.fluidStack.amount);
+            canDrain -= canDrain % granularity;
             if (doDrain && (!isAutomated || !isCreative())) {
                 tank.fluidStack.amount -= canDrain;
                 tank.onStackModified();
